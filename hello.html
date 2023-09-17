@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registry</title>
+</head>
+<body>
+    <h1>Student Registry</h1>
+
+    <label for="studentId">Student ID:</label>
+    <input type="number" id="studentId"><br>
+
+    <label for="name">Name:</label>
+    <input type="text" id="name"><br>
+
+    <label for="school">School:</label>
+    <input type="text" id="school"><br>
+
+    <label for="grade">Grade:</label>
+    <input type="text" id="grade"><br>
+
+    <button onclick="addStudent()">Add Student</button>
+
+    <hr>
+
+    <h2>Students</h2>
+    <ul id="studentList"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // Replace with the actual contract address
+        const abi = [
+        [
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "studentId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "school",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "grade",
+				"type": "string"
+			}
+		],
+		"name": "addStudent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getStudent",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getStudentCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "students",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "studentId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "school",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "grade",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+        ];
+        const web3 = new Web3(window.ethereum);
+
+        async function addStudent() {
+            const studentId = document.getElementById('studentId').value;
+            const name = document.getElementById('name').value;
+            const school = document.getElementById('school').value;
+            const grade = document.getElementById('grade').value;
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const contract = new web3.eth.Contract(abi, contractAddress);
+                await contract.methods.addStudent(studentId, name, school, grade).send({ from: accounts[0] });
+                alert('Student added successfully!');
+                updateStudentList();
+            } catch (error) {
+                console.error(error);
+                alert('Error adding student');
+            }
+        }
+
+        async function updateStudentList() {
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+
+            const contract = new web3.eth.Contract(abi, contractAddress);
+            const studentCount = await contract.methods.getStudentCount().call();
+            for (let i = 0; i < studentCount; i++) {
+                const student = await contract.methods.getStudent(i).call();
+                const listItem = document.createElement('li');
+                listItem.textContent = `ID: ${student[0]}, Name: ${student[1]}, School: ${student[2]}, Grade: ${student[3]}`;
+                studentList.appendChild(listItem);
+            }
+        }
+
+        // Initialize Ethereum provider
+        async function init() {
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.autoRefreshOnNetworkChange = false;
+                try {
+                    await window.ethereum.enable();
+                    updateStudentList();
+                } catch (error) {
+                    console.error(error);
+                    alert('Please connect to MetaMask or a compatible Ethereum wallet');
+                }
+            } else {
+                alert('Please install MetaMask or a compatible Ethereum wallet extension');
+            }
+        }
+
+        // Call init when the page loads
+        window.onload = init;
+    </script>
+</body>
+</html>

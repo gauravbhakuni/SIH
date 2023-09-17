@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Registry DApp</title>
+</head>
+<body>
+    <h1>Certificate Registry</h1>
+    
+    <h2>Add Certificate</h2>
+    <label for="studentId">Student ID:</label>
+    <input type="number" id="studentId" placeholder="Enter Student ID"><br>
+    <label for="studentName">Student Name:</label>
+    <input type="text" id="studentName" placeholder="Enter Student Name"><br>
+    <label for="issuer">Issuer:</label>
+    <input type="text" id="issuer" placeholder="Enter Issuer"><br>
+    <label for="additionalInfo">Additional Info:</label>
+    <input type="text" id="additionalInfo" placeholder="Enter Additional Info"><br>
+    <button onclick="addCertificate()">Add Certificate</button>
+
+    <h2>Retrieve Certificate by Student ID</h2>
+    <label for="searchStudentId">Search by Student ID:</label>
+    <input type="number" id="searchStudentId" placeholder="Enter Student ID to Search"><br>
+    <button onclick="getCertificateByStudentId()">Retrieve Certificate</button>
+    <div id="certificateDetails"></div>
+
+    <h2>Total Certificates</h2>
+    <div id="totalCertificates"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8'; // Replace with your contract's actual address
+        const contractABI = [ 
+		[
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "studentId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "studentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "issuer",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "additionalInfo",
+				"type": "string"
+			}
+		],
+		"name": "addCertificate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "certificates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "studentId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "studentName",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "issuer",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "additionalInfo",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "studentId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCertificateByStudentId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getCertificateCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "isStudentIdUsed",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+         ];
+
+		const web3 = new Web3(window.ethereum);
+        const certificateRegistryContract = new web3.eth.Contract(contractABI, contractAddress);
+
+        async function addCertificate() {
+            const studentId = document.getElementById('studentId').value;
+            const studentName = document.getElementById('studentName').value;
+            const issuer = document.getElementById('issuer').value;
+            const additionalInfo = document.getElementById('additionalInfo').value;
+
+            // Add certificate to the blockchain
+            await certificateRegistryContract.methods
+                .addCertificate(studentId, studentName, issuer, additionalInfo)
+                .send({ from: accounts[0] }); // Replace with your Ethereum account address
+
+            alert('Certificate added successfully.');
+        }
+
+        async function getCertificateByStudentId() {
+            const searchStudentId = document.getElementById('searchStudentId').value;
+
+            // Retrieve certificate details from the blockchain
+            const result = await certificateRegistryContract.methods
+                .getCertificateByStudentId(searchStudentId)
+                .call();
+
+            const certificateDetails = `
+                Student ID: ${result[0]}<br>
+                Student Name: ${result[1]}<br>
+                Issuer: ${result[2]}<br>
+                Additional Info: ${result[3]}<br>
+                Timestamp: ${new Date(result[4] * 1000)}<br>
+            `;
+
+            document.getElementById('certificateDetails').innerHTML = certificateDetails;
+        }
+
+        async function updateTotalCertificates() {
+    try {
+        // Retrieve and display the total number of certificates on the blockchain
+        const totalCertificates = await certificateRegistryContract.methods
+            .getCertificateCount()
+            .call();
+
+        document.getElementById('totalCertificates').innerHTML = `Total Certificates: ${totalCertificates}`;
+    } catch (error) {
+        console.error('Error fetching certificate count:', error);
+    }
+	}
+
+		// Initialize Ethereum provider
+        async function init() {
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.autoRefreshOnNetworkChange = false;
+                try {
+                    await window.ethereum.enable();
+                    updateTotalCertificates();
+                } catch (error) {
+                    console.error(error);
+                    alert('Please connect to MetaMask or a compatible Ethereum wallet');
+                }
+            } else {
+                alert('Please install MetaMask or a compatible Ethereum wallet extension');
+            }
+        }
+
+		window.onload = init;
+    </script>
+</body>
+</html>
